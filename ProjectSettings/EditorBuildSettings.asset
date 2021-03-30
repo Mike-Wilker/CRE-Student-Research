@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/Setup.unity
     guid: 84c78cd17a88a764c87a06b3fd9228ae
   - enabled: 1
-    path: Assets/Scenes/Trial.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+    path: Assets/Scenes/Game.unity
+    guid: ed1c317b22529b845ae9812442a71d38
+  - enabled: 1
+    path: Assets/Scenes/Debrief.unity
+    guid: ddfce457b4413f6438e186e3913a8af0
   m_configObjects: {}

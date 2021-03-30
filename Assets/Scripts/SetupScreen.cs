@@ -10,7 +10,7 @@ public class SetupScreen : MonoBehaviour
     {
         if (int.TryParse(IDEntryField.text, out StateMachineGame.participantID))
         {
-            SceneManager.LoadScene("Trial");
+            SceneManager.LoadScene("Game");
         }
         else
         {
