@@ -87,12 +87,12 @@ public class StateMachineGame : MonoBehaviour
     private string logfile = "";
     public int successes = 0;
     const int TUTORIAL_END = 8;
-    const int TARGET_PRACTICE_END = TUTORIAL_END + 81;
+    const int TARGET_PRACTICE_END = TUTORIAL_END + 21;
     const int TARGET_TEST_END = TARGET_PRACTICE_END + 21;
-    const int PROFIT_PRACTICE_END = TARGET_TEST_END + 81;
-    const int PROFIT_TEST_END = PROFIT_PRACTICE_END + 21;
+    const int PROFIT_PRACTICE_END = TARGET_TEST_END + 21;
+    const int PROFIT_TEST_END = PROFIT_PRACTICE_END + 2;
     const int TRIAL_END = PROFIT_TEST_END + 66;
-    const int MINIMUM_SCORE = 9;
+    const int MINIMUM_SCORE = 7;
     private void Awake()
     {
         audioSource = GetComponent<AudioSource>();
@@ -106,11 +106,9 @@ public class StateMachineGame : MonoBehaviour
                 state.IReward = LARGE_PENALTIES[latinSquare(LARGE_PENALTIES.Length, participantID)];
             }
         }
-        audioSource.clip = songChoices[latinSquare(songChoices.Length, participantID)];
-        audioSource.Play();
         Directory.CreateDirectory("Experiment Logs");
         logfile = Path.Combine("Experiment Logs", participantID + System.DateTime.Now.ToString(" yyyy MM dd hh mm ss") + ".csv");
-        File.WriteAllText(logfile, "Key Pressed,From Rectangle,To Rectangle,Time Spent Before Moving,Point Change" + Environment.NewLine);
+        File.WriteAllText(logfile, "Trail Number,Key Pressed,From Rectangle,To Rectangle,Time Spent Before Moving,Point Change" + Environment.NewLine);
         newTrial();
     }
     void Update()
@@ -163,9 +161,9 @@ public class StateMachineGame : MonoBehaviour
                 setState(int.Parse(currentState.nextUState.name));
                 break;
             default:
-                if (trialNumber > PROFIT_PRACTICE_END)
+                if (trialNumber > PROFIT_TEST_END)
                 {
-                    File.AppendAllText(logfile, "U," + currentState.name + "," + currentState.nextUState.name + "," + turnTimer.ToString() + "," + currentState.UReward.ToString() + Environment.NewLine);
+                    File.AppendAllText(logfile, (trialNumber - PROFIT_TEST_END) / 2 + ",U," + currentState.name + "," + currentState.nextUState.name + "," + turnTimer.ToString() + "," + currentState.UReward.ToString() + Environment.NewLine);
                     turnTimer = 0.0f;
                 }
                 changeState(currentState.UReward, currentState.nextUState);
@@ -185,9 +183,9 @@ public class StateMachineGame : MonoBehaviour
                 setState(int.Parse(currentState.nextIState.name));
                 break;
             default:
-                if (trialNumber > PROFIT_PRACTICE_END)
+                if (trialNumber > PROFIT_TEST_END)
                 {
-                    File.AppendAllText(logfile, "I," + currentState.name + "," + currentState.nextIState.name + "," + turnTimer.ToString() + "," + currentState.IReward.ToString() + Environment.NewLine);
+                    File.AppendAllText(logfile, (trialNumber - PROFIT_TEST_END) / 2 + ",I," + currentState.name + "," + currentState.nextIState.name + "," + turnTimer.ToString() + "," + currentState.IReward.ToString() + Environment.NewLine);
                     turnTimer = 0.0f;
                 }
                 changeState(currentState.IReward, currentState.nextIState);
@@ -243,6 +241,7 @@ public class StateMachineGame : MonoBehaviour
                 centerText.text = "Press I to move across the circle.";
                 break;
             case 7:
+                setState(5);
                 centerText.text = "Experiment with U and I to get used to how you can move around the circle.";
                 turnTimer = 10.0f;
                 break;
@@ -251,7 +250,7 @@ public class StateMachineGame : MonoBehaviour
                 break;
             case TARGET_PRACTICE_END:
                 successes = 0;
-                showOverlay("Test 1", "In order to continue, you must score at least 9 out of 10 successes.");
+                showOverlay("Test 1", "In order to continue, you must score at least 7 out of 10 successes.");
                 break;
             case TARGET_TEST_END:
                 if (successes > MINIMUM_SCORE)
@@ -271,21 +270,23 @@ public class StateMachineGame : MonoBehaviour
                 break;
             case PROFIT_PRACTICE_END:
                 successes = 0;
-                showOverlay("Test 2", "In order to continue, you must achieve the highest score on 9 out of 10 tries.");
+                showOverlay("Test 2", "In order to continue, you must achieve the highest possible score in the next question.");
                 break;
             case PROFIT_TEST_END:
-                if (successes > MINIMUM_SCORE)
+                if (score >= targetScore)
                 {
-                    showOverlay("Test 2", "You have achieved " + successes.ToString() + " successes and passed the test.");
+                    showOverlay("Test 2", "You have passed the test.");
                 }
                 else
                 {
-                    _trialNumber = PROFIT_PRACTICE_END - 1;
-                    showOverlay("Test 2", "You have achieved " + successes.ToString() + " successes and failed the test. Please try again.");
+                    _trialNumber = PROFIT_TEST_END - 2;
+                    showOverlay("Test 2", "You have failed the test.");
                 }
                 break;
             case PROFIT_TEST_END + 1:
                 showOverlay("Trial", "You have successfully passed the tutorials and practice rounds, and are now beginning the trial.");
+                audioSource.clip = songChoices[participantID % songChoices.Length];
+                audioSource.Play();
                 break;
             case TRIAL_END:
                 showOverlay("End", "You have finished the trial.");
@@ -298,7 +299,7 @@ public class StateMachineGame : MonoBehaviour
                 {
                     if (trialNumber % 2 == 1)
                     {
-                        topText.text = "Practice 1 Review " + ((trialNumber - TUTORIAL_END) / 2 + 1);
+                        topText.text = "Practice 1 Review " + ((trialNumber - TUTORIAL_END) / 2 + 1 + " / " + (TARGET_PRACTICE_END - TUTORIAL_END) / 2);
                         if (targetState != null)
                         {
                             targetState.image.color = unselectedColor;
@@ -333,7 +334,7 @@ public class StateMachineGame : MonoBehaviour
                 {
                     if (trialNumber % 2 == 0)
                     {
-                        topText.text = "Test 1 Question " + ((trialNumber - TARGET_PRACTICE_END) / 2 + 1);
+                        topText.text = "Test 1 Question " + ((trialNumber - TARGET_PRACTICE_END) / 2 + 1) + " / " + (TARGET_TEST_END - TARGET_PRACTICE_END) / 2;
                         if (targetState != null)
                         {
                             targetState.image.color = unselectedColor;
@@ -370,9 +371,9 @@ public class StateMachineGame : MonoBehaviour
                     if (trialNumber % 2 == 0)
                     {
                         score = 0;
-                        topText.text = "Practice 2 Review " + (trialNumber - TARGET_TEST_END) / 2;
+                        topText.text = "Practice 2 Review " + (trialNumber - TARGET_TEST_END) / 2 + " / " + (PROFIT_PRACTICE_END - TARGET_TEST_END) / 2;
                         setState(UnityEngine.Random.Range(1, 7));
-                        moveCount = UnityEngine.Random.Range(2, 8);
+                        moveCount = UnityEngine.Random.Range(2, 4);
                         targetScore = findHighScore();
                     }
                     else
@@ -392,27 +393,15 @@ public class StateMachineGame : MonoBehaviour
                     if (trialNumber % 2 == 0)
                     {
                         score = 0;
-                        topText.text = "Test 2 Question " + ((trialNumber - PROFIT_PRACTICE_END) / 2 + 1);
-                        setState(UnityEngine.Random.Range(1, 7));
-                        moveCount = UnityEngine.Random.Range(2, 8);
+                        topText.text = "Test 2 Quiz";
+                        setState(UnityEngine.Random.Range(1, 4));
+                        moveCount = UnityEngine.Random.Range(3, 4);
                         targetScore = findHighScore();
-                    }
-                    else
-                    {
-                        if (score >= targetScore)
-                        {
-                            successes++;
-                            showOverlay("Test 2", "Success.");
-                        }
-                        else
-                        {
-                            showOverlay("Test 2", "Failure.");
-                        }
                     }
                 }
                 else if (trialNumber < TRIAL_END)
                 {
-                    if (trialNumber % 2 == 0)
+                    if (trialNumber % 2 == 1)
                     {
                         turnTimer = 0;
                         score = 0;
@@ -421,7 +410,7 @@ public class StateMachineGame : MonoBehaviour
                     }
                     else
                     {
-                        showOverlay("Trial episode " + (trialNumber - PROFIT_TEST_END) / 2, "You scored " + score + " points.");
+                        showOverlay("Trial episode " + (trialNumber - PROFIT_TEST_END) / 2 + " / " + (TRIAL_END - PROFIT_TEST_END) / 2, "You scored " + score + " points.");
                     }
                 }
                 break;
